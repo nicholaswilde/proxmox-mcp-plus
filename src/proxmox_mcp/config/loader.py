@@ -60,6 +60,9 @@ def load_config(config_path: Optional[str] = None) -> Config:
                  - Field values are invalid
     """
     if not config_path:
+        config_path = os.getenv("PROXMOX_MCP_CONFIG")
+        
+    if not config_path:
         raise ValueError("PROXMOX_MCP_CONFIG environment variable must be set")
 
     try:

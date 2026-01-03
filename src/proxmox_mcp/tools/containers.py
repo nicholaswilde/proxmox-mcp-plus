@@ -1,6 +1,8 @@
-from typing import List, Dict, Optional, Tuple, Any, Union
 import json
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 from mcp.types import TextContent as Content
+
 from .base import ProxmoxTool
 
 
@@ -518,3 +520,183 @@ class ContainerTools(ProxmoxTool):
 
         except Exception as e:
             return self._err("Failed to update container(s)", e)
+
+    def create_container(
+        self,
+        node: str,
+        vmid: str,
+        name: str,
+        ostemplate: str,
+        cpus: int,
+        memory: int,
+        disk_size: int,
+        storage: Optional[str] = None,
+        password: Optional[str] = None,
+        network_bridge: str = "vmbr0",
+        ip_address: str = "dhcp"
+    ) -> List[Content]:
+        """Create a new LXC container with specified configuration.
+
+        Args:
+            node: Host node name (e.g., 'pve')
+            vmid: New Container ID number (e.g., '200')
+            name: Container name (e.g., 'my-container')
+            ostemplate: Template to use (e.g. 'local:vztmpl/ubuntu-20.04-standard_20.04-1_amd64.tar.gz')
+            cpus: Number of CPU cores (e.g., 1, 2)
+            memory: Memory size in MB (e.g., 512)
+            disk_size: Disk size in GB (e.g., 8)
+            storage: Storage name (optional, will auto-detect)
+            password: Root password (optional)
+            network_bridge: Network bridge (default 'vmbr0')
+            ip_address: IP address (default 'dhcp', or '192.168.1.50/24')
+        """
+        try:
+            # Check if Container ID already exists
+            try:
+                self.proxmox.nodes(node).lxc(vmid).config.get()
+                raise ValueError(f"Container {vmid} already exists on node {node}")
+            except Exception as e:
+                if "does not exist" not in str(e).lower():
+                    raise e
+
+            # Get storage information if not provided
+            storage_list = self.proxmox.nodes(node).storage.get()
+            storage_info = {}
+            for s in storage_list:
+                storage_info[s["storage"]] = s
+
+            # Auto-detect storage if not specified
+            if storage is None:
+                # Prefer local-lvm for containers first
+                for s in storage_list:
+                    if s["storage"] == "local-lvm" and "rootdir" in s.get("content", ""):
+                        storage = s["storage"]
+                        break
+                if storage is None:
+                    # Then try any storage with rootdir support
+                    for s in storage_list:
+                        if "rootdir" in s.get("content", ""):
+                            storage = s["storage"]
+                            break
+                if storage is None:
+                    raise ValueError("No suitable storage found for Container rootfs")
+
+            # Validate storage exists and supports containers
+            if storage not in storage_info:
+                raise ValueError(f"Storage '{storage}' not found on node {node}")
+
+            if "rootdir" not in storage_info[storage].get("content", ""):
+                raise ValueError(f"Storage '{storage}' does not support Container rootfs")
+
+            # Prepare Container configuration
+            ct_config = {
+                "vmid": vmid,
+                "hostname": name,
+                "ostemplate": ostemplate,
+                "cores": cpus,
+                "memory": memory,
+                "swap": 512, # Default swap
+                "storage": storage,
+                "rootfs": f"{storage}:{disk_size}",
+                "net0": f"name=eth0,bridge={network_bridge},ip={ip_address}",
+                "cmode": "tty", # Console mode
+                "features": "nesting=1", # Useful for Docker inside LXC etc.
+            }
+
+            if password:
+                ct_config["password"] = password
+
+            # Create the Container
+            task_result = self.proxmox.nodes(node).lxc.create(**ct_config)
+
+            result_text = f"""🎉 Container {vmid} created successfully!
+
+📋 Container Configuration:
+  • Name: {name}
+  • Node: {node}
+  • VM ID: {vmid}
+  • Template: {ostemplate}
+  • CPU Cores: {cpus}
+  • Memory: {memory} MB
+  • Disk: {disk_size} GB ({storage})
+  • Network: eth0 (bridge={network_bridge}, ip={ip_address})
+
+🔧 Task ID: {task_result}
+
+💡 Next steps:
+  1. Start the container using start_container tool
+  2. Access the console"""
+
+            return [Content(type="text", text=result_text)]
+
+        except ValueError as e:
+            raise e
+        except Exception as e:
+            return self._err(f"create Container {vmid}", e)
+
+    def delete_container(self, node: str, vmid: str, force: bool = False) -> List[Content]:
+        """Delete/remove an LXC container completely.
+
+        This will permanently delete the container and all its associated data including:
+        - Container configuration
+        - Virtual disks
+        - Snapshots
+
+        WARNING: This operation cannot be undone!
+
+        Args:
+            node: Host node name (e.g., 'pve1', 'proxmox-node2')
+            vmid: Container ID number (e.g., '100', '101')
+            force: Force deletion even if container is running (will stop first)
+
+        Returns:
+            List of Content objects containing deletion result
+
+        Raises:
+            ValueError: If container is not found or is running and force=False
+            RuntimeError: If deletion fails
+        """
+        try:
+            # Check if container exists and get current status
+            try:
+                ct_status = self.proxmox.nodes(node).lxc(vmid).status.current.get()
+                current_status = ct_status.get("status")
+                ct_name = ct_status.get("name") or ct_status.get("hostname") or f"CT-{vmid}"
+            except Exception as e:
+                if "does not exist" in str(e).lower() or "not found" in str(e).lower():
+                    raise ValueError(f"Container {vmid} not found on node {node}")
+                raise e
+
+            # Check if container is running
+            if current_status == "running":
+                if not force:
+                    raise ValueError(f"Container {vmid} ({ct_name}) is currently running. "
+                                   f"Please stop it first or use force=True to stop and delete.")
+                else:
+                    # Force stop the container first
+                    self.proxmox.nodes(node).lxc(vmid).status.stop.post()
+                    result_text = f"🛑 Stopping Container {vmid} ({ct_name}) before deletion...\n"
+            else:
+                result_text = f"🗑️ Deleting Container {vmid} ({ct_name})...\n"
+
+            # Delete the container
+            task_result = self.proxmox.nodes(node).lxc(vmid).delete()
+
+            result_text += f"""🗑️ Container {vmid} ({ct_name}) deletion initiated successfully!
+
+⚠️ WARNING: This operation will permanently remove:
+  • Container configuration
+  • All virtual disks
+  • All snapshots
+  • Cannot be undone!
+
+🔧 Task ID: {task_result}
+
+✅ Container {vmid} ({ct_name}) is being deleted from node {node}"""
+
+            return [Content(type="text", text=result_text)]
+
+        except ValueError as e:
+            raise e
+        except Exception as e:
+            return self._err(f"delete Container {vmid}", e)
