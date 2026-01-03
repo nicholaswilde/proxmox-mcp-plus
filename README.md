@@ -6,51 +6,17 @@ An enhanced Python-based Model Context Protocol (MCP) server for interacting wit
 
 This project is built upon the excellent open-source project [ProxmoxMCP](https://github.com/canvrno/ProxmoxMCP) by [@canvrno](https://github.com/canvrno). Thanks to the original author for providing the foundational framework and creative inspiration!
 
-## Fork Lineage
+## 🍴 Fork Lineage
 
-*   **Original project**: `canvrno/ProxmoxMCP`
-*   **This fork**: `nicholaswilde/proxmox-mcp-plus`
+*   **Original project**: [`canvrno/ProxmoxMCP`](https://github.com/canvrno/ProxmoxMCP)
+*   **First fork**: [`RekklesNA/ProxmoxMCP-Plus`](https://github.com/RekklesNA/ProxmoxMCP-Plus)
+*   **This fork**: `nicholaswilde/proxmox-mcp-plus` (you are here)
 
-## 🆕 New Features and Improvements
+### 🚀 **Major Enhancements in this fork:**
 
-### Major enhancements compared to the original version:
-
-- ✨ **Complete VM Lifecycle Management**
-  - Brand new `create_vm` tool - Support for creating virtual machines with custom configurations
-  - New `delete_vm` tool - Safe VM deletion (with force deletion option)
-  - Enhanced intelligent storage type detection (LVM/file-based)
-
-- 🔧 **Extended Power Management Features**
-  - `start_vm` - Start virtual machines
-  - `stop_vm` - Force stop virtual machines
-  - `shutdown_vm` - Graceful shutdown
-  - `reset_vm` - Restart virtual machines
-
-- 🐳 **Complete Container Support (LXC)**
-  - `create_container` - Create new LXC containers with custom templates
-  - `delete_container` - Delete LXC containers (safely or forcefully)
-  - `get_containers` - List all LXC containers and their status
-  - `start_container` - Start LXC container
-  - `stop_container` - Stop LXC container
-  - `restart_container` - Restart LXC container (forcefully/gracefully)
-  - `update_container_resources` - Adjust container CPU, memory, swap, or extend disk
-
-- 📊 **Enhanced Monitoring and Display**
-  - Improved storage pool status monitoring
-  - More detailed cluster health status checks
-  - Rich output formatting and themes
-
-- 🌐 **Complete OpenAPI Integration**
-  - 13 complete REST API endpoints
-  - Production-ready Docker deployment
-  - Perfect Open WebUI integration
-  - Natural language VM creation support
-
-- 🛡️ **Production-grade Security and Stability**
-  - Enhanced error handling mechanisms
-  - Comprehensive parameter validation
-  - Production-level logging
-  - Complete unit test coverage
+  - Brand new `create_container` tool - Support for creating LXC containers with custom configurations
+  - New `delete_container` tool - Safe LXC container deletion (with force deletion option)
+  - Other bug fixes and enhancements.
 
 ## Built With
 
