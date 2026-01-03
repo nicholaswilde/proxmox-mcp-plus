@@ -1,10 +1,10 @@
 # ProxmoxMCP-Plus - Enhanced Proxmox MCP Server
 
-An enhanced Python-based Model Context Protocol (MCP) server for interacting with Proxmox virtualization platforms. This project is built upon **[canvrno/ProxmoxMCP](https://github.com/canvrno/ProxmoxMCP)** with numerous new features and improvements, providing complete OpenAPI integration and more powerful virtualization management capabilities.
+An enhanced Python-based Model Context Protocol (MCP) server for interacting with Proxmox virtualization platforms. This project is built upon **[canvrno/ProxmoxMCP](https://github.com/canvrno/ProxmoxMCP)** and **[RekklesNA/ProxmoxMCP-Plus](https://github.com/RekklesNA/ProxmoxMCP-Plus)**
 
 ## Acknowledgments
 
-This project is built upon the excellent open-source project [ProxmoxMCP](https://github.com/canvrno/ProxmoxMCP) by [@canvrno](https://github.com/canvrno). Thanks to the original author for providing the foundational framework and creative inspiration!
+This project is built upon the excellent open-source project [ProxmoxMCP](https://github.com/canvrno/ProxmoxMCP) by [@canvrno](https://github.com/canvrno) and [ProxmoxMCP-Plus](https://github.com/RekklesNA/ProxmoxMCP-Plus) by [RekklesNA](https://github.com/RekklesNA). Thanks to the original authors for providing the foundational framework and creative inspiration!
 
 ## 🍴 Fork Lineage
 
