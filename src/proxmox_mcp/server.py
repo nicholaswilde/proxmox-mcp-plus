@@ -14,45 +14,45 @@ The server exposes a set of tools for managing Proxmox resources including:
 - Storage management
 - Cluster status monitoring
 """
-import logging
 import os
-import sys
 import signal
-from typing import Optional, List, Annotated, Literal
+import sys
+from typing import Annotated, Literal, Optional
 
-from mcp.server.fastmcp import FastMCP
-from mcp.server.fastmcp.tools import Tool
-from mcp.types import TextContent as Content
-from pydantic import Field, BaseModel
 from fastapi import Body
+from mcp.server.fastmcp import FastMCP
+from pydantic import BaseModel, Field
 
 from .config.loader import load_config
 from .core.logging import setup_logging
 from .core.proxmox import ProxmoxManager
-from .tools.node import NodeTools
-from .tools.vm import VMTools
-from .tools.storage import StorageTools
 from .tools.cluster import ClusterTools
 from .tools.containers import ContainerTools
 from .tools.definitions import (
-    GET_NODES_DESC,
-    GET_NODE_STATUS_DESC,
-    GET_VMS_DESC,
+    CREATE_CONTAINER_DESC,
     CREATE_VM_DESC,
-    EXECUTE_VM_COMMAND_DESC,
-    START_VM_DESC,
-    STOP_VM_DESC,
-    SHUTDOWN_VM_DESC,
-    RESET_VM_DESC,
+    DELETE_CONTAINER_DESC,
     DELETE_VM_DESC,
+    EXECUTE_VM_COMMAND_DESC,
+    GET_CLUSTER_STATUS_DESC,
     GET_CONTAINERS_DESC,
-    START_CONTAINER_DESC,
-    STOP_CONTAINER_DESC,
-    RESTART_CONTAINER_DESC,
-    UPDATE_CONTAINER_RESOURCES_DESC,
+    GET_NODE_STATUS_DESC,
+    GET_NODES_DESC,
     GET_STORAGE_DESC,
-    GET_CLUSTER_STATUS_DESC
+    GET_VMS_DESC,
+    RESET_VM_DESC,
+    RESTART_CONTAINER_DESC,
+    SHUTDOWN_VM_DESC,
+    START_CONTAINER_DESC,
+    START_VM_DESC,
+    STOP_CONTAINER_DESC,
+    STOP_VM_DESC,
+    UPDATE_CONTAINER_RESOURCES_DESC,
 )
+from .tools.node import NodeTools
+from .tools.storage import StorageTools
+from .tools.vm import VMTools
+
 
 class ProxmoxMCPServer:
     """Main server class for Proxmox MCP."""
@@ -199,6 +199,42 @@ class ProxmoxMCPServer:
                 format_style=payload.format_style,
             )
 
+        @self.mcp.tool(description=CREATE_CONTAINER_DESC)
+        def create_container(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve')")],
+            vmid: Annotated[str, Field(description="New Container ID number (e.g. '200')")],
+            name: Annotated[str, Field(description="Container name (e.g. 'my-container')")],
+            ostemplate: Annotated[str, Field(description="Template to use (e.g. 'local:vztmpl/ubuntu-20.04...tar.gz')")],
+            cpus: Annotated[int, Field(description="Number of CPU cores", ge=1)],
+            memory: Annotated[int, Field(description="Memory size in MB", ge=16)],
+            disk_size: Annotated[int, Field(description="Disk size in GB", ge=1)],
+            storage: Annotated[Optional[str], Field(description="Storage name (optional, will auto-detect)", default=None)] = None,
+            password: Annotated[Optional[str], Field(description="Root password (optional)", default=None)] = None,
+            network_bridge: Annotated[str, Field(description="Network bridge", default="vmbr0")] = "vmbr0",
+            ip_address: Annotated[str, Field(description="IP address (default 'dhcp')", default="dhcp")] = "dhcp"
+        ):
+            return self.container_tools.create_container(
+                node=node,
+                vmid=vmid,
+                name=name,
+                ostemplate=ostemplate,
+                cpus=cpus,
+                memory=memory,
+                disk_size=disk_size,
+                storage=storage,
+                password=password,
+                network_bridge=network_bridge,
+                ip_address=ip_address
+            )
+
+        @self.mcp.tool(description=DELETE_CONTAINER_DESC)
+        def delete_container(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve')")],
+            vmid: Annotated[str, Field(description="Container ID number (e.g. '200')")],
+            force: Annotated[bool, Field(description="Force deletion even if container is running", default=False)] = False
+        ):
+            return self.container_tools.delete_container(node, vmid, force)
+
         # Container controls
         @self.mcp.tool(description=START_CONTAINER_DESC)
         def start_container(
@@ -275,7 +311,8 @@ class ProxmoxMCPServer:
             self.logger.error(f"Server error: {e}")
             sys.exit(1)
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for the Proxmox MCP server."""
     config_path = os.getenv("PROXMOX_MCP_CONFIG")
     if not config_path:
         print("PROXMOX_MCP_CONFIG environment variable must be set")
@@ -290,3 +327,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)
+
+if __name__ == "__main__":
+    main()

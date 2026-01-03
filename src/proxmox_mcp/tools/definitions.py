@@ -143,6 +143,39 @@ disk_gb: Additional disk size in GiB to add (optional)
 disk: Disk identifier to resize (default 'rootfs')
 """
 
+CREATE_CONTAINER_DESC = """Create a new LXC container with specified configuration.
+
+Parameters:
+node* - Host node name (e.g. 'pve')
+vmid* - New Container ID number (e.g. '200', '300')
+name* - Container name (e.g. 'my-container', 'web-server')
+ostemplate* - Template to use (e.g. 'local:vztmpl/ubuntu-20.04-standard_20.04-1_amd64.tar.gz')
+cpus* - Number of CPU cores (e.g. 1, 2, 4)
+memory* - Memory size in MB (e.g. 512, 1024, 2048)
+disk_size* - Disk size in GB (e.g. 8, 10, 20)
+storage - Storage name (optional, will auto-detect if not specified)
+password - Root password (optional, highly recommended)
+network_bridge - Network bridge (default 'vmbr0')
+ip_address - IP address (default 'dhcp')
+
+Example:
+Create ubuntu container 200 on pve with 1 core, 512MB RAM, 8GB disk using local template"""
+
+DELETE_CONTAINER_DESC = """Delete/remove an LXC container completely.
+
+⚠️ WARNING: This operation permanently deletes the container and all its data!
+
+Parameters:
+node* - Host node name (e.g. 'pve')
+vmid* - Container ID number (e.g. '200', '300')
+force - Force deletion even if container is running (optional, default: false)
+
+This will permanently remove:
+- Container configuration
+- All virtual disks
+- All snapshots
+- Cannot be undone!"""
+
 # Storage tool descriptions
 GET_STORAGE_DESC = """List storage pools across the cluster with their usage and configuration.
 

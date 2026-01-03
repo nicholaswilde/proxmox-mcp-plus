@@ -2,14 +2,23 @@
 Tests for the Proxmox MCP server.
 """
 
-import os
 import json
-import pytest
-from unittest.mock import Mock, patch
+import os
+from unittest.mock import patch
 
-from mcp.server.fastmcp import FastMCP
+import pytest
 from mcp.server.fastmcp.exceptions import ToolError
+from proxmox_mcp.config.models import AuthConfig, Config, LoggingConfig, ProxmoxConfig
 from proxmox_mcp.server import ProxmoxMCPServer
+
+
+@pytest.fixture
+def mock_config():
+    return Config(
+        proxmox=ProxmoxConfig(host="test.proxmox.com", port=8006, verify_ssl=False),
+        auth=AuthConfig(user="test@pve", token_name="test_token", token_value="test_value"),
+        logging=LoggingConfig(level="DEBUG")
+    )
 
 @pytest.fixture
 def mock_env_vars():
@@ -35,9 +44,10 @@ def mock_proxmox():
         yield mock
 
 @pytest.fixture
-def server(mock_env_vars, mock_proxmox):
+def server(mock_env_vars, mock_proxmox, mock_config):
     """Fixture to create a ProxmoxMCPServer instance."""
-    return ProxmoxMCPServer()
+    with patch("proxmox_mcp.server.load_config", return_value=mock_config):
+        return ProxmoxMCPServer()
 
 def test_server_initialization(server, mock_proxmox):
     """Test server initialization with environment variables."""
@@ -59,6 +69,7 @@ async def test_list_tools(server):
     assert "get_nodes" in tool_names
     assert "get_vms" in tool_names
     assert "get_containers" in tool_names
+    assert "create_container" in tool_names
     assert "execute_vm_command" in tool_names
     assert "update_container_resources" in tool_names
 

@@ -64,7 +64,8 @@ class ProxmoxManager:
             'token_name': auth_config.token_name,
             'token_value': auth_config.token_value,
             'verify_ssl': proxmox_config.verify_ssl,
-            'service': proxmox_config.service
+            'service': proxmox_config.service,
+            'timeout': 30  # Add default 30 second timeout
         }
 
     def _setup_api(self) -> ProxmoxAPI:
