@@ -1,11 +1,15 @@
 # ProxmoxMCP-Plus - Enhanced Proxmox MCP Server
 
-
 An enhanced Python-based Model Context Protocol (MCP) server for interacting with Proxmox virtualization platforms. This project is built upon **[canvrno/ProxmoxMCP](https://github.com/canvrno/ProxmoxMCP)** with numerous new features and improvements, providing complete OpenAPI integration and more powerful virtualization management capabilities.
 
 ## Acknowledgments
 
 This project is built upon the excellent open-source project [ProxmoxMCP](https://github.com/canvrno/ProxmoxMCP) by [@canvrno](https://github.com/canvrno). Thanks to the original author for providing the foundational framework and creative inspiration!
+
+## Fork Lineage
+
+*   **Original project**: `canvrno/ProxmoxMCP`
+*   **This fork**: `nicholaswilde/proxmox-mcp-plus`
 
 ## 🆕 New Features and Improvements
 
@@ -22,7 +26,9 @@ This project is built upon the excellent open-source project [ProxmoxMCP](https:
   - `shutdown_vm` - Graceful shutdown
   - `reset_vm` - Restart virtual machines
 
-- 🐳 **New Container Support**
+- 🐳 **Complete Container Support (LXC)**
+  - `create_container` - Create new LXC containers with custom templates
+  - `delete_container` - Delete LXC containers (safely or forcefully)
   - `get_containers` - List all LXC containers and their status
   - `start_container` - Start LXC container
   - `stop_container` - Stop LXC container
@@ -35,7 +41,7 @@ This project is built upon the excellent open-source project [ProxmoxMCP](https:
   - Rich output formatting and themes
 
 - 🌐 **Complete OpenAPI Integration**
-  - 11 complete REST API endpoints
+  - 13 complete REST API endpoints
   - Production-ready Docker deployment
   - Perfect Open WebUI integration
   - Natural language VM creation support
@@ -60,14 +66,13 @@ This project is built upon the excellent open-source project [ProxmoxMCP](https:
 - 🔒 Secure token-based authentication with Proxmox
 - 🖥️ Complete VM lifecycle management (create, start, stop, reset, shutdown, delete)
 - 💻 VM console command execution
-- 🐳 LXC container management support
+- 🐳 Full LXC container management (create, delete, start, stop, update resources)
 - 🗃️ Intelligent storage type detection (LVM/file-based)
 - 📝 Configurable logging system
 - ✅ Type-safe implementation with Pydantic
 - 🎨 Rich output formatting with customizable themes
 - 🌐 OpenAPI REST endpoints for integration
-- 📡 11 fully functional API endpoints
-
+- 📡 13 fully functional API endpoints
 
 ## Installation
 
@@ -87,8 +92,8 @@ Before starting, ensure you have:
 1. Clone and set up environment:
    ```bash
    # Clone repository
-   git clone https://github.com/RekklesNA/ProxmoxMCP-Plus.git
-   cd ProxmoxMCP-Plus
+   git clone https://github.com/nicholaswilde/proxmox-mcp-plus.git
+   cd proxmox-mcp-plus
 
    # Create and activate virtual environment
    uv venv
@@ -126,7 +131,7 @@ Before starting, ensure you have:
        },
        "logging": {
            "level": "INFO",               # Optional: DEBUG for more detail
-           "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+           "format": "% (asctime)s - %(name)s - %(levelname)s - %(message)s",
            "file": "proxmox_mcp.log"      # Optional: Log to file
        }
    }
@@ -216,12 +221,12 @@ For Cline users, add this configuration to your MCP settings file (typically at 
 {
     "mcpServers": {
         "ProxmoxMCP-Plus": {
-            "command": "/absolute/path/to/ProxmoxMCP-Plus/.venv/bin/python",
+            "command": "/absolute/path/to/proxmox-mcp-plus/.venv/bin/python",
             "args": ["-m", "proxmox_mcp.server"],
-            "cwd": "/absolute/path/to/ProxmoxMCP-Plus",
+            "cwd": "/absolute/path/to/proxmox-mcp-plus",
             "env": {
-                "PYTHONPATH": "/absolute/path/to/ProxmoxMCP-Plus/src",
-                "PROXMOX_MCP_CONFIG": "/absolute/path/to/ProxmoxMCP-Plus/proxmox-config/config.json",
+                "PYTHONPATH": "/absolute/path/to/proxmox-mcp-plus/src",
+                "PROXMOX_MCP_CONFIG": "/absolute/path/to/proxmox-mcp-plus/proxmox-config/config.json",
                 "PROXMOX_HOST": "your-proxmox-host",
                 "PROXMOX_USER": "username@pve",
                 "PROXMOX_TOKEN_NAME": "token-name",
@@ -240,7 +245,7 @@ For Cline users, add this configuration to your MCP settings file (typically at 
 
 ## Available Tools & API Endpoints
 
-The server provides 11 comprehensive MCP tools and corresponding REST API endpoints:
+The server provides 13 comprehensive MCP tools and corresponding REST API endpoints:
 
 ### VM Management Tools
 
@@ -257,38 +262,7 @@ Create a new virtual machine with specified resources.
 - `storage` (string, optional): Storage pool name
 - `ostype` (string, optional): OS type (default: l26)
 
-**API Endpoint:**
-```http
-POST /create_vm
-Content-Type: application/json
-
-{
-    "node": "pve",
-    "vmid": "200",
-    "name": "my-vm",
-    "cpus": 1,
-    "memory": 2048,
-    "disk_size": 10
-}
-```
-
-**Example Response:**
-```
-🎉 VM 200 created successfully!
-
-📋 VM Configuration:
-  • Name: my-vm
-  • Node: pve
-  • VM ID: 200
-  • CPU Cores: 1
-  • Memory: 2048 MB (2.0 GB)
-  • Disk: 10 GB (local-lvm, raw format)
-  • Storage Type: lvmthin
-  • Network: virtio (bridge=vmbr0)
-  • QEMU Agent: Enabled
-
-🔧 Task ID: UPID:pve:001AB729:0442E853:682FF380:qmcreate:200:root@pam!mcp
-```
+**API Endpoint:** `POST /create_vm`
 
 #### VM Power Management 🆕
 
@@ -329,16 +303,40 @@ List all LXC containers across the cluster.
 
 **API Endpoint:** `POST /get_containers`
 
-**Example Response:**
-```
-🐳 Containers
+#### create_container 🆕
+Create a new LXC container with specified configuration.
 
-🐳 nginx-server (ID: 200)
-  • Status: RUNNING
-  • Node: pve
-  • CPU Cores: 2
-  • Memory: 1.5 GB / 2.0 GB (75.0%)
-```
+**Parameters:**
+- `node` (string, required): Host node name
+- `vmid` (string, required): New Container ID
+- `name` (string, required): Container name
+- `ostemplate` (string, required): OS template path (e.g. 'local:vztmpl/ubuntu...')
+- `cpus` (integer, required): Number of CPU cores
+- `memory` (integer, required): Memory size in MB
+- `disk_size` (integer, required): Disk size in GB
+- `storage` (string, optional): Storage name (will auto-detect if omitted)
+- `password` (string, optional): Root password
+- `network_bridge` (string, default: 'vmbr0')
+- `ip_address` (string, default: 'dhcp')
+
+**API Endpoint:** `POST /create_container`
+
+#### delete_container 🆕
+Delete/remove an LXC container completely.
+
+**Parameters:**
+- `node` (string, required): Host node name
+- `vmid` (string, required): Container ID
+- `force` (boolean, default: false): Force deletion even if container is running
+
+**API Endpoint:** `POST /delete_container`
+
+#### Container Power & Resources 🆕
+
+- **start_container**: Start LXC container(s).
+- **stop_container**: Stop LXC container(s) (graceful or force).
+- **restart_container**: Restart LXC container(s).
+- **update_container_resources**: Update resources (cores, memory, swap, disk) for container(s).
 
 ### Monitoring Tools
 
@@ -346,17 +344,6 @@ List all LXC containers across the cluster.
 Lists all nodes in the Proxmox cluster.
 
 **API Endpoint:** `POST /get_nodes`
-
-**Example Response:**
-```
-🖥️ Proxmox Nodes
-
-🖥️ pve-compute-01
-  • Status: ONLINE
-  • Uptime: ⏳ 156d 12h
-  • CPU Cores: 64
-  • Memory: 186.5 GB / 512.0 GB (36.4%)
-```
 
 #### get_node_status
 Get detailed status of a specific node.
@@ -441,7 +428,7 @@ ProxmoxMCP Plus automatically detects storage types and selects appropriate disk
 ## Project Structure
 
 ```
-ProxmoxMCP-Plus/
+proxmox-mcp-plus/
 ├── 📁 src/                          # Source code
 │   └── proxmox_mcp/
 │       ├── server.py                # Main MCP server implementation
@@ -450,7 +437,7 @@ ProxmoxMCP-Plus/
 │       ├── formatting/              # Output formatting and themes
 │       ├── tools/                   # Tool implementations
 │       │   ├── vm.py               # VM management (create/power) 🆕
-│       │   ├── container.py        # Container management 🆕
+│       │   ├── containers.py       # Container management 🆕
 │       │   └── console/            # VM console operations
 │       └── utils/                   # Utilities (auth, logging)
 │
@@ -460,6 +447,7 @@ ProxmoxMCP-Plus/
 │   ├── test_vm_power.py           # VM power management tests 🆕
 │   ├── test_vm_start.py           # VM startup tests
 │   ├── test_create_vm.py          # VM creation tests 🆕
+│   ├── test_create_container.py   # Container creation tests 🆕
 │   └── test_openapi.py            # OpenAPI service tests
 │
 ├── 📁 proxmox-config/              # Configuration files
@@ -477,8 +465,6 @@ ProxmoxMCP-Plus/
 │
 └── 📄 Documentation
     ├── README.md                  # This file
-    ├── VM_CREATION_GUIDE.md       # VM creation guide
-    ├── OPENAPI_DEPLOYMENT.md      # OpenAPI deployment
     └── LICENSE                    # MIT License
 ```
 
@@ -499,6 +485,9 @@ python test_vm_power.py
 # Test VM creation
 python test_create_vm.py
 
+# Test Container creation
+python test_create_container.py
+
 # Test OpenAPI service
 python test_openapi.py
 ```
@@ -513,14 +502,15 @@ curl -X POST "http://your-server:8811/get_nodes" \
 # Test VM creation
 curl -X POST "http://your-server:8811/create_vm" \
   -H "Content-Type: application/json" \
-  -d '{
+  -d 
+  {
     "node": "pve",
     "vmid": "300",
     "name": "test-vm",
     "cpus": 1,
     "memory": 2048,
     "disk_size": 10
-  }'
+  }
 ```
 
 ## Production Security
@@ -588,7 +578,7 @@ docker logs proxmox-mcp-api -f
 - [x] VM Creation (user requirement: 1 CPU + 2GB RAM + 10GB storage) 🆕
 - [x] VM Power Management (start VPN-Server ID:101) 🆕
 - [x] VM Deletion Feature 🆕
-- [x] Container Management (LXC) 🆕
+- [x] Container Management (LXC) (Create/Delete/Power/Resources) 🆕
 - [x] Storage Compatibility (LVM/file-based)
 - [x] OpenAPI Integration (port 8811)
 - [x] Open WebUI Integration
@@ -625,7 +615,3 @@ MIT License
 - Thanks to [@canvrno](https://github.com/canvrno) for the excellent foundational project [ProxmoxMCP](https://github.com/canvrno/ProxmoxMCP)
 - Thanks to the Proxmox community for providing the powerful virtualization platform
 - Thanks to all contributors and users for their support
-
----
-
-**Ready to Deploy!** 🎉 Your enhanced Proxmox MCP service with OpenAPI integration is ready for production use.
