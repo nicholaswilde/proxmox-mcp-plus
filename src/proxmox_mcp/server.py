@@ -33,6 +33,7 @@ from .tools.definitions import (
     CREATE_VM_DESC,
     DELETE_CONTAINER_DESC,
     DELETE_VM_DESC,
+    DOWNLOAD_TEMPLATE_DESC,
     EXECUTE_VM_COMMAND_DESC,
     GET_CLUSTER_STATUS_DESC,
     GET_CONTAINERS_DESC,
@@ -40,6 +41,8 @@ from .tools.definitions import (
     GET_NODES_DESC,
     GET_STORAGE_DESC,
     GET_VMS_DESC,
+    LIST_AVAILABLE_TEMPLATES_DESC,
+    LIST_TEMPLATES_DESC,
     RESET_VM_DESC,
     RESTART_CONTAINER_DESC,
     SHUTDOWN_VM_DESC,
@@ -173,6 +176,28 @@ class ProxmoxMCPServer:
         @self.mcp.tool(description=GET_STORAGE_DESC)
         def get_storage():
             return self.storage_tools.get_storage()
+
+        @self.mcp.tool(description=LIST_TEMPLATES_DESC)
+        def list_templates(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve')")],
+            storage: Annotated[str, Field(description="Storage name (default: 'local')", default="local")] = "local",
+            content_type: Annotated[str, Field(description="Content type (default: 'vztempl')", default="vztempl")] = "vztempl"
+        ):
+            return self.storage_tools.list_templates(node, storage, content_type)
+
+        @self.mcp.tool(description=LIST_AVAILABLE_TEMPLATES_DESC)
+        def list_available_templates(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve')")]
+        ):
+            return self.storage_tools.list_available_templates(node)
+
+        @self.mcp.tool(description=DOWNLOAD_TEMPLATE_DESC)
+        def download_template(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve')")],
+            template: Annotated[str, Field(description="Template package name (e.g. 'alpine-3.18...')")],
+            storage: Annotated[str, Field(description="Storage name (default: 'local')", default="local")] = "local"
+        ):
+            return self.storage_tools.download_template(node, template, storage)
 
         # Cluster tools
         @self.mcp.tool(description=GET_CLUSTER_STATUS_DESC)

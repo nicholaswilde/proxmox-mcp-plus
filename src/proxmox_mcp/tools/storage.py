@@ -92,3 +92,71 @@ class StorageTools(ProxmoxTool):
             return self._format_response(storage, "storage")
         except Exception as e:
             self._handle_error("get storage", e)
+
+    def list_templates(self, node: str, storage: str = "local", content_type: str = "vztempl") -> List[Content]:
+        """List templates on a specific storage.
+
+        Args:
+            node: The node name (e.g. 'pve')
+            storage: The storage name (e.g. 'local'). Defaults to 'local'.
+            content_type: Content type to filter (e.g. 'vztempl', 'iso'). Defaults to 'vztempl'.
+        
+        Returns:
+            List of Content objects.
+        """
+        try:
+            content = self.proxmox.nodes(node).storage(storage).content.get(content=content_type)
+            return self._format_response(content, "templates")
+        except Exception as e:
+            self._handle_error(f"list templates on {node}:{storage}", e)
+
+    def list_available_templates(self, node: str) -> List[Content]:
+        """List container templates available for download.
+
+        Args:
+            node: The node name (e.g. 'pve')
+
+        Returns:
+            List of Content objects.
+        """
+        try:
+            # Equivalent to 'pveam available'
+            # API: /nodes/{node}/aplinfo
+            templates = self.proxmox.nodes(node).aplinfo.get()
+            return self._format_response(templates, "available_templates")
+        except Exception as e:
+            self._handle_error(f"list available templates on {node}", e)
+
+    def download_template(self, node: str, template: str, storage: str = "local") -> List[Content]:
+        """Download a container template to storage.
+
+        Args:
+            node: The node name (e.g. 'pve')
+            template: The template package name
+            storage: The target storage name (default: 'local')
+
+        Returns:
+            List of Content objects (task UPID usually).
+        """
+        try:
+            # Equivalent to 'pveam download <storage> <template>'
+            # API: POST /nodes/{node}/storage/{storage}/content
+            # Parameters: content='vztmpl', filename=<template> (or template=<template>)
+            # 'proxmoxer' handles positional args for URL building, kwargs for body parameters.
+            
+            # Using 'template' parameter as per common 'pveam' API usage for download.
+            # Some versions use 'filename' + 'content' type.
+            # 'pveam download' CLI uses: POST /api2/json/nodes/{node}/storage/{storage}/content
+            # with body: content=vztmpl, filename=<template>
+            
+            # However, simpler endpoint for download specifically might be:
+            # POST /nodes/{node}/aplinfo (update) -> no, that's 'pveam update'
+            
+            # Let's try the standard content creation endpoint with 'vztmpl' content type.
+            result = self.proxmox.nodes(node).storage(storage).content.post(
+                content='vztmpl',
+                filename=template
+            )
+            return self._format_response({"upid": result}, "download_task")
+        except Exception as e:
+            self._handle_error(f"download template {template} to {node}:{storage}", e)
