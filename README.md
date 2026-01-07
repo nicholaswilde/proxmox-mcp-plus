@@ -16,6 +16,7 @@ This project is built upon the excellent open-source project [ProxmoxMCP](https:
 
   - Brand new `create_container` tool - Support for creating LXC containers with custom configurations
   - New `delete_container` tool - Safe LXC container deletion (with force deletion option)
+  - **Container template management** - Full lifecycle: list local/remote templates, download new ones, and delete unused templates
   - Other bug fixes and enhancements.
 
 ## Built With
@@ -38,7 +39,7 @@ This project is built upon the excellent open-source project [ProxmoxMCP](https:
 - ✅ Type-safe implementation with Pydantic
 - 🎨 Rich output formatting with customizable themes
 - 🌐 OpenAPI REST endpoints for integration
-- 📡 13 fully functional API endpoints
+- 📡 22 fully functional API endpoints
 
 ## Installation
 
@@ -211,7 +212,7 @@ For Cline users, add this configuration to your MCP settings file (typically at 
 
 ## Available Tools & API Endpoints
 
-The server provides 13 comprehensive MCP tools and corresponding REST API endpoints:
+The server provides 22 comprehensive MCP tools and corresponding REST API endpoints:
 
 ### VM Management Tools
 
@@ -303,6 +304,46 @@ Delete/remove an LXC container completely.
 - **stop_container**: Stop LXC container(s) (graceful or force).
 - **restart_container**: Restart LXC container(s).
 - **update_container_resources**: Update resources (cores, memory, swap, disk) for container(s).
+
+### 🆕 Container Template Tools
+
+#### list_templates 🆕
+List container templates (or ISOs) currently stored on a node's storage.
+
+**Parameters:**
+- `node` (string, required): Host node name
+- `storage` (string, default: 'local'): Storage pool name
+- `content_type` (string, default: 'vztempl'): Content type filter
+
+**API Endpoint:** `POST /list_templates`
+
+#### list_available_templates 🆕
+Browse the official Proxmox repository for downloadable container templates.
+
+**Parameters:**
+- `node` (string, required): Host node name
+
+**API Endpoint:** `POST /list_available_templates`
+
+#### download_template 🆕
+Download a system template to a specific storage pool.
+
+**Parameters:**
+- `node` (string, required): Host node name
+- `template` (string, required): Template package name (from `list_available_templates`)
+- `storage` (string, default: 'local'): Target storage pool
+
+**API Endpoint:** `POST /download_template`
+
+#### delete_template 🆕
+Delete a container template from storage.
+
+**Parameters:**
+- `node` (string, required): Host node name
+- `template` (string, required): Template volume ID or name (e.g. 'local:vztmpl/alpine...')
+- `storage` (string, default: 'local'): Storage pool name
+
+**API Endpoint:** `POST /delete_template`
 
 ### Monitoring Tools
 

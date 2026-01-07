@@ -182,6 +182,52 @@ GET_STORAGE_DESC = """List storage pools across the cluster with their usage and
 Example:
 {"storage": "local-lvm", "type": "lvm", "used": "500GB", "total": "1TB"}"""
 
+LIST_TEMPLATES_DESC = """List container templates on a specific storage.
+
+Parameters:
+node* - Host node name (e.g. 'pve')
+storage - Storage name (default: 'local')
+content_type - Content type filter (default: 'vztempl')
+
+Example:
+{"volid": "local:vztmpl/ubuntu-20.04-standard_20.04-1_amd64.tar.gz", "format": "tgz", "size": 123456}"""
+
+LIST_AVAILABLE_TEMPLATES_DESC = """List container templates available for download from Proxmox repository.
+
+Parameters:
+node* - Host node name (e.g. 'pve')
+
+Example:
+{"package": "alpine-3.18-default_20230607_amd64.tar.xz", "headline": "Alpine Linux 3.18", "section": "system"}"""
+
+DOWNLOAD_TEMPLATE_DESC = """Download a container template to storage.
+
+Parameters:
+node* - Host node name (e.g. 'pve')
+storage - Storage name (default: 'local')
+template* - Template package name to download (e.g. 'alpine-3.18-default_20230607_amd64.tar.xz')
+
+Example:
+Start download of alpine-3.18-default_20230607_amd64.tar.xz to local storage"""
+
+DELETE_TEMPLATE_DESC = """Delete a container template from storage.
+
+Parameters:
+node* - Host node name (e.g. 'pve')
+storage - Storage name (default: 'local')
+template* - Template volume ID or name (e.g. 'local:vztmpl/alpine-3.18...tar.xz')
+
+Example:
+Delete local:vztmpl/alpine-3.18...tar.xz from storage"""
+
+UPDATE_AVAILABLE_TEMPLATES_DESC = """Update the list of available container templates from upstream repositories.
+
+Parameters:
+node* - Host node name (e.g. 'pve')
+
+Example:
+Update available templates list on node pve (pveam update)"""
+
 # Cluster tool descriptions
 GET_CLUSTER_STATUS_DESC = """Get overall Proxmox cluster health and configuration status.
 
