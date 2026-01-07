@@ -16,7 +16,7 @@ This project is built upon the excellent open-source project [ProxmoxMCP](https:
 
   - Brand new `create_container` tool - Support for creating LXC containers with custom configurations
   - New `delete_container` tool - Safe LXC container deletion (with force deletion option)
-  - **Container template management** - List local templates, browse available system templates, and download them directly
+  - **Container template management** - Full lifecycle: list local/remote templates, download new ones, and delete unused templates
   - Other bug fixes and enhancements.
 
 ## Built With
@@ -334,6 +334,16 @@ Download a system template to a specific storage pool.
 - `storage` (string, default: 'local'): Target storage pool
 
 **API Endpoint:** `POST /download_template`
+
+#### delete_template 🆕
+Delete a container template from storage.
+
+**Parameters:**
+- `node` (string, required): Host node name
+- `template` (string, required): Template volume ID or name (e.g. 'local:vztmpl/alpine...')
+- `storage` (string, default: 'local'): Storage pool name
+
+**API Endpoint:** `POST /delete_template`
 
 ### Monitoring Tools
 

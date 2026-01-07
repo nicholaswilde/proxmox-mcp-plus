@@ -32,6 +32,7 @@ from .tools.definitions import (
     CREATE_CONTAINER_DESC,
     CREATE_VM_DESC,
     DELETE_CONTAINER_DESC,
+    DELETE_TEMPLATE_DESC,
     DELETE_VM_DESC,
     DOWNLOAD_TEMPLATE_DESC,
     EXECUTE_VM_COMMAND_DESC,
@@ -181,7 +182,7 @@ class ProxmoxMCPServer:
         def list_templates(
             node: Annotated[str, Field(description="Host node name (e.g. 'pve')")],
             storage: Annotated[str, Field(description="Storage name (default: 'local')", default="local")] = "local",
-            content_type: Annotated[str, Field(description="Content type (default: 'vztempl')", default="vztempl")] = "vztempl"
+            content_type: Annotated[str, Field(description="Content type (default: 'vztmpl')", default="vztmpl")] = "vztmpl"
         ):
             return self.storage_tools.list_templates(node, storage, content_type)
 
@@ -198,6 +199,14 @@ class ProxmoxMCPServer:
             storage: Annotated[str, Field(description="Storage name (default: 'local')", default="local")] = "local"
         ):
             return self.storage_tools.download_template(node, template, storage)
+
+        @self.mcp.tool(description=DELETE_TEMPLATE_DESC)
+        def delete_template(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve')")],
+            template: Annotated[str, Field(description="Template volume ID or name (e.g. 'local:vztmpl/alpine-3.18...tar.xz')")],
+            storage: Annotated[str, Field(description="Storage name (default: 'local')", default="local")] = "local"
+        ):
+            return self.storage_tools.delete_template(node, template, storage)
 
         # Cluster tools
         @self.mcp.tool(description=GET_CLUSTER_STATUS_DESC)

@@ -210,6 +210,24 @@ template* - Template package name to download (e.g. 'alpine-3.18-default_2023060
 Example:
 Start download of alpine-3.18-default_20230607_amd64.tar.xz to local storage"""
 
+DELETE_TEMPLATE_DESC = """Delete a container template from storage.
+
+Parameters:
+node* - Host node name (e.g. 'pve')
+storage - Storage name (default: 'local')
+template* - Template volume ID or name (e.g. 'local:vztmpl/alpine-3.18...tar.xz')
+
+Example:
+Delete local:vztmpl/alpine-3.18...tar.xz from storage"""
+
+UPDATE_AVAILABLE_TEMPLATES_DESC = """Update the list of available container templates from upstream repositories.
+
+Parameters:
+node* - Host node name (e.g. 'pve')
+
+Example:
+Update available templates list on node pve (pveam update)"""
+
 # Cluster tool descriptions
 GET_CLUSTER_STATUS_DESC = """Get overall Proxmox cluster health and configuration status.
 
